@@ -106,7 +106,7 @@
      <property name="font">
       <font>
        <family>Bahnschrift SemiBold</family>
-       <pointsize>11</pointsize>
+       <pointsize>13</pointsize>
       </font>
      </property>
      <attribute name="horizontalHeaderVisible">
