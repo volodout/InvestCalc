@@ -23,6 +23,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
          <property name="text">
@@ -35,6 +36,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
         </widget>
@@ -48,6 +50,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
          <property name="text">
@@ -60,6 +63,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
         </widget>
@@ -73,6 +77,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
          <property name="text">
@@ -85,6 +90,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
         </widget>
@@ -98,6 +104,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
          <property name="text">
@@ -110,6 +117,7 @@
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
         </widget>
@@ -123,6 +131,7 @@
      <property name="font">
       <font>
        <family>Bahnschrift SemiBold</family>
+       <pointsize>8</pointsize>
       </font>
      </property>
      <property name="text">
@@ -135,10 +144,11 @@
      <property name="font">
       <font>
        <family>Bahnschrift SemiBold</family>
+       <pointsize>11</pointsize>
       </font>
      </property>
      <property name="text">
-      <string>Добавить</string>
+      <string>Продолжить</string>
      </property>
     </widget>
    </item>

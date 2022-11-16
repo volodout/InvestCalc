@@ -36,6 +36,7 @@ class FirstWindow(QWidget, Ui_Form):
         self.currency_combobox.currentIndexChanged.connect(self.balance)
         self.buttons_edit = QButtonGroup()
         self.buttons_delete = QButtonGroup()
+        self.btn_new.setIcon(QIcon('add.png'))
 
         self.select_data()
         self.currency()
@@ -171,7 +172,7 @@ class AddWindow(QWidget, Ui_Form_Add):
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
 
 
-class DeleteWindow(QWidget):
+class DeleteWindow(QDialog):
     updateSignal = pyqtSignal()
 
     def __init__(self, name):
