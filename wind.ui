@@ -54,6 +54,7 @@
              <property name="font">
               <font>
                <family>Bahnschrift SemiBold</family>
+               <pointsize>10</pointsize>
               </font>
              </property>
             </widget>

@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QMessageBox
 from PyQt5.QtWinExtras import QtWin
 
 from wind import Ui_Form
-from add_new import Ui_Form_AddEdit
+from add_edit import Ui_Form_AddEdit
 from forecast import Ui_Form_Forecast
 from styles import style_continue
 from styles import style
@@ -100,7 +100,6 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
 
             buttons_edit.append(self.tableWidget.cellWidget(i, 3).objectName())
             buttons_del.append(self.tableWidget.cellWidget(i, 4).objectName())
-        print(buttons_edit)
 
         self.tableWidget.setHorizontalHeaderLabels(['Название', 'Стоимость', 'Доходность', '', ''])
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -211,7 +210,6 @@ class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления да
             self.setStyleSheet(style_continue)
 
     def keyPressEvent(self, event):  # обработка клавиатуры
-        print(event.key())
         if self.btn:
             if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Enter - 1:
                 self.add_new()
@@ -435,7 +433,7 @@ def except_hook(cls, exception, traceback):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = FirstWindow()
-    app.setWindowIcon(QIcon('logo.jpg'))
+    app.setWindowIcon(QIcon('icon.jpg'))
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())
