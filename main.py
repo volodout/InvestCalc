@@ -10,14 +10,13 @@ from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QMessageBox
 from PyQt5.QtWinExtras import QtWin
 
 from wind import Ui_Form
-from add_new import Ui_Form_Add
+from add_new import Ui_Form_AddEdit
 from forecast import Ui_Form_Forecast
 from styles import style_continue
 from styles import style
 
 myappid = 'mycompany.myproduct.subproduct.version'
 QtWin.setCurrentProcessExplicitAppUserModelID(myappid)
-
 
 signs = '₽$€'
 rate = ('в рублях', 'в долларах', 'в евро')
@@ -30,7 +29,7 @@ buttons_del = []
 usd0, eur0 = 0., 0.  # значения валют
 
 
-class FirstWindow(QWidget, Ui_Form):
+class FirstWindow(QWidget, Ui_Form):  # главное окно
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -48,7 +47,7 @@ class FirstWindow(QWidget, Ui_Form):
         self.select_data()
         self.currency()
         self.balance()
-        self.setFixedSize(625, 650)
+        self.setFixedSize(610, 650)
 
         self.setStyleSheet(style)
 
@@ -57,12 +56,13 @@ class FirstWindow(QWidget, Ui_Form):
         self.add_form.updateSignal.connect(self.update)
         self.add_form.show()
 
-    def delete(self):
+    def delete(self):  # удаление данных
         name = self.tableWidget.item(buttons_del.index(self.sender().objectName()), 0).text()
         valid = QMessageBox.question(self, 'Удалить',
                                      f'Действительно удалить элемент "{name}"? Отменить это действие будет невозможно.',
                                      QMessageBox.Ok | QMessageBox.Cancel)
-        if valid == QMessageBox.Yes:
+
+        if valid == QMessageBox.Ok:
             self.cur.execute("DELETE FROM stock WHERE title = ?", (name,))
             self.con.commit()
             self.update()
@@ -79,15 +79,17 @@ class FirstWindow(QWidget, Ui_Form):
         self.forecast_form = ForecastWindow()
         self.forecast_form.show()
 
-    def select_data(self):
+    def select_data(self):  # заполнение таблицы данными
         res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM stock").fetchall()
         self.tableWidget.setColumnCount(5)
         self.tableWidget.setRowCount(len(res))
 
         for i, row in enumerate(res):
             self.tableWidget.setItem(i, 0, QTableWidgetItem(str(row[0])))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(int(row[1])) + ' ' + signs[row[3] - 1]))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(int(row[2])) + '%'))
+            rowint = int(row[1]) if float(row[1]) % 1 == 0 else float(row[1])
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(str(rowint) + ' ' + signs[row[3] - 1]))
+            rowint = int(row[2]) if float(row[2]) % 1 == 0 else float(row[2])
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(str(rowint) + '%'))
             self.tableWidget.setCellWidget(i, 3,
                                            QPushButton(objectName=f'btn_tabl_{i}', clicked=self.edit))
             self.tableWidget.setCellWidget(i, 4,
@@ -98,13 +100,14 @@ class FirstWindow(QWidget, Ui_Form):
 
             buttons_edit.append(self.tableWidget.cellWidget(i, 3).objectName())
             buttons_del.append(self.tableWidget.cellWidget(i, 4).objectName())
+        print(buttons_edit)
 
         self.tableWidget.setHorizontalHeaderLabels(['Название', 'Стоимость', 'Доходность', '', ''])
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tableWidget.resizeColumnToContents(3)
         self.tableWidget.resizeColumnToContents(4)
 
-    def balance(self):
+    def balance(self):  # итоговый баланс
         q = 'SELECT cost FROM stock WHERE currency = (SELECT id FROM currencies WHERE sign = ?)'
 
         rub = sum([elem[0] for elem in self.cur.execute(q, ('RUB',)).fetchall()])
@@ -126,7 +129,7 @@ class FirstWindow(QWidget, Ui_Form):
             value1 = int(value) if value % 1 == 0 else value
             self.label_2.setText(str(value1) + ' €')
 
-    def currency(self):
+    def currency(self):  # курс валют
         global usd0, eur0
         full_page = requests.get(DOLLAR_RUB, headers=headers)
         soup = BeautifulSoup(full_page.content, 'html.parser')
@@ -141,11 +144,13 @@ class FirstWindow(QWidget, Ui_Form):
         eur0 = float(convert[0].text.replace(',', '.'))
 
     def update(self):
+        buttons_edit.clear()
+        buttons_del.clear()
         self.select_data()
         self.balance()
 
 
-class AddWindow(QWidget, Ui_Form_Add):
+class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления данных
     updateSignal = pyqtSignal()
 
     def __init__(self):
@@ -195,7 +200,7 @@ class AddWindow(QWidget, Ui_Form_Add):
         except sqlite3.IntegrityError:
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
 
-    def change(self):
+    def change(self):  # изменение кнопки
         if self.name.text() and self.cost.text() and self.percent.text() and self.comboBox.currentIndex() > 0:
             self.btn_continue.setEnabled(True)
             self.btn = True
@@ -205,16 +210,17 @@ class AddWindow(QWidget, Ui_Form_Add):
             self.btn = False
             self.setStyleSheet(style_continue)
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event):  # обработка клавиатуры
+        print(event.key())
         if self.btn:
-            if event.key() == Qt.Key_Enter:
+            if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Enter - 1:
                 self.add_new()
-            elif event.key() == Qt.Key_Escape:
-                self.close()
+        if event.key() == Qt.Key_Escape:
+            self.close()
         event.accept()
 
 
-class EditWindow(QWidget, Ui_Form_Add):
+class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения данных
     updateSignal = pyqtSignal()
 
     def __init__(self, num):
@@ -242,8 +248,9 @@ class EditWindow(QWidget, Ui_Form_Add):
         self.percent.setText(str(self.cur.execute(percent, (num,)).fetchone()[0]))
         q = 'SELECT currency FROM stock WHERE id = ?'
         self.comboBox.setCurrentIndex(int(self.cur.execute(q, (num,)).fetchone()[0]) - 1)
+        self.change()
 
-        self.setStyleSheet(style_continue)
+        self.setStyleSheet(style)
 
     def edit(self):
         name = self.name.text()
@@ -274,26 +281,27 @@ class EditWindow(QWidget, Ui_Form_Add):
         except sqlite3.IntegrityError:
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
 
-    def change(self):
+    def change(self):  # изменение кнопки
+        self.setStyleSheet(style)
         if self.name.text() and self.cost.text() and self.percent.text():
             self.btn_continue.setEnabled(True)
             self.btn = True
             self.setStyleSheet(style)
         else:
-            self.btn_continue.setDisabled(True)
+            self.btn_continue.setEnabled(False)
             self.btn = False
             self.setStyleSheet(style_continue)
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event):  # обработка клавиатуры
         if self.btn:
-            if event.key() == Qt.Key_Enter:
+            if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Enter - 1:
                 self.edit()
-            elif event.key() == Qt.Key_Escape:
-                self.close()
+        if event.key() == Qt.Key_Escape:
+            self.close()
         event.accept()
 
 
-class ForecastWindow(QWidget, Ui_Form_Forecast):
+class ForecastWindow(QWidget, Ui_Form_Forecast):  # окно прогнозов
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -326,7 +334,8 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
         self.tableWidget.setHorizontalHeaderLabels(['Название', 'Стоимость', 'Доходность'])
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
-    def balance(self):
+    def balance(self):  # баланс
+        balance = 0.
         try:
             res = self.cur.execute('SELECT * FROM stock').fetchall()
             rubs, usds, eurs = [], [], []
@@ -338,8 +347,6 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
                     usds.append(float(self.tableWidget.item(i, 1).text()[:-2]))
                 elif self.tableWidget.item(i, 1).text()[-1] == '€':
                     eurs.append(float(self.tableWidget.item(i, 1).text()[:-2]))
-            print(rubs, usds, eurs)
-            print(usd0)
             balance = sum(rubs) + sum(usds) * usd0 + sum(eurs) * eur0
             print(balance)
         except UnboundLocalError:
@@ -360,7 +367,7 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
             value1 = int(value) if value % 1 == 0 else value
             self.label.setText(str(value1) + ' €')
 
-    def costs(self):  # список начальных стоимостей
+    def costs(self):  # заполнение списка начальных стоимостей
         for i in range(self.tableWidget.rowCount()):
             price = float(self.tableWidget.item(i, 1).text()[:-2])
             if price % 1 == 0:
@@ -368,7 +375,7 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
             else:
                 self.allcosts.append(price)
 
-    def change(self, value):
+    def change(self, value):  # изменение цен в таблице
         for i in range(self.tableWidget.rowCount()):
             sign = self.tableWidget.item(i, 1).text()[-1]
             if value != 0:
@@ -429,7 +436,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = FirstWindow()
     app.setWindowIcon(QIcon('logo.jpg'))
-    ex.setStyleSheet('background: #696969; text: white')
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())

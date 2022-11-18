@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\wind.ui'
+# Form implementation generated from reading ui file 'wind.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.4
 #
@@ -150,6 +150,8 @@ class Ui_Form(object):
         self.tableWidget.horizontalHeader().setMinimumSectionSize(20)
         self.tableWidget.verticalHeader().setVisible(True)
         self.verticalLayout_5.addWidget(self.tableWidget)
+        spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_5.addItem(spacerItem5)
         self.verticalLayout_3.addLayout(self.verticalLayout_5)
 
         self.retranslateUi(Form)

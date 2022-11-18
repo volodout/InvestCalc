@@ -18,6 +18,9 @@ QPushButton#btn_new, QPushButton#btn_forecast{
 QPushButton:hover{
     background: #fff700;
 }
+QPushButton#QMessageBox.Ok{
+    background: blue
+}
 QLineEdit{
     background-color: #4d4d4d;
     padding: 1px;
@@ -42,30 +45,13 @@ QScrollBar:vertical{
       margin: 16px 0 16px 0;
       border: 1px solid #222222;
 }
-
-
-
-
-
-QHeaderView::section
-{
+QHeaderView::section{
     background-color: #505050;
     padding-left: 4px;
     border: 1px solid #6c6c6c;
 }
 
-
-
-
-
-
-
-
-
-
-
-QWidget:item:selected
-{
+QWidget:item:selected{
     background-color: darkgrey;
 }
 '''
