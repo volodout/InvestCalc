@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
+    <width>604</width>
     <height>645</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <property name="windowTitle">
    <string>InvestCalc</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_8">
+  <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <property name="spacing">
@@ -44,7 +44,13 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="currency_combobox"/>
+            <widget class="QComboBox" name="currency_combobox">
+             <property name="font">
+              <font>
+               <family>Bahnschrift SemiBold</family>
+              </font>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
@@ -180,8 +186,8 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>40</width>
-             <height>20</height>
+             <width>35</width>
+             <height>5</height>
             </size>
            </property>
           </spacer>
@@ -192,7 +198,7 @@
             <widget class="QPushButton" name="btn_forecast">
              <property name="minimumSize">
               <size>
-               <width>168</width>
+               <width>200</width>
                <height>40</height>
               </size>
              </property>
@@ -205,36 +211,11 @@
              <property name="font">
               <font>
                <family>Bahnschrift SemiBold</family>
-               <pointsize>12</pointsize>
+               <pointsize>11</pointsize>
               </font>
              </property>
              <property name="text">
               <string>Посмотреть прогноз</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="btn_statistic">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>200</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <family>Bahnschrift SemiBold</family>
-               <pointsize>12</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Статистика</string>
              </property>
             </widget>
            </item>
@@ -301,7 +282,8 @@
        </property>
        <property name="font">
         <font>
-         <pointsize>10</pointsize>
+         <family>Bahnschrift SemiBold</family>
+         <pointsize>15</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -319,7 +301,7 @@
         <number>20</number>
        </attribute>
        <attribute name="horizontalHeaderDefaultSectionSize">
-        <number>110</number>
+        <number>160</number>
        </attribute>
        <attribute name="verticalHeaderVisible">
         <bool>true</bool>

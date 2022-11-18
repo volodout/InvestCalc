@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>593</width>
-    <height>131</height>
+    <height>144</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -141,6 +141,9 @@
    </item>
    <item>
     <widget class="QPushButton" name="pushButton">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="font">
       <font>
        <family>Bahnschrift SemiBold</family>

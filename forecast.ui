@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>548</width>
-    <height>492</height>
+    <width>500</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,23 +20,77 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
+      <widget class="QLabel" name="label">
+       <property name="font">
+        <font>
+         <family>Arial Black</family>
+         <pointsize>23</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>0</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLabel" name="label_3">
+        <widget class="QLabel" name="label_4">
          <property name="maximumSize">
           <size>
-           <width>200</width>
+           <width>70</width>
            <height>16777215</height>
           </size>
          </property>
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
-           <pointsize>13</pointsize>
+           <pointsize>11</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>Баланс через:</string>
+          <string>Баланс</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="currency_combobox">
+         <property name="minimumSize">
+          <size>
+           <width>125</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>101</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="maximumSize">
+          <size>
+           <width>65</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>через:</string>
          </property>
         </widget>
        </item>
@@ -44,7 +98,8 @@
         <widget class="QLabel" name="label_2">
          <property name="font">
           <font>
-           <pointsize>13</pointsize>
+           <family>Bahnschrift SemiBold</family>
+           <pointsize>11</pointsize>
           </font>
          </property>
          <property name="text">
@@ -53,29 +108,6 @@
         </widget>
        </item>
       </layout>
-     </item>
-     <item>
-      <widget class="QComboBox" name="currency_combobox">
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label">
-       <property name="font">
-        <font>
-         <family>Arial Black</family>
-         <pointsize>20</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>0</string>
-       </property>
-      </widget>
      </item>
      <item>
       <widget class="QSlider" name="horizontalSlider">
@@ -111,6 +143,9 @@
      </property>
      <attribute name="horizontalHeaderVisible">
       <bool>true</bool>
+     </attribute>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>135</number>
      </attribute>
     </widget>
    </item>

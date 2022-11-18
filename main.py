@@ -1,7 +1,8 @@
 import sys
 import sqlite3
 import requests
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
+from PyQt5.Qt import Qt
 from bs4 import BeautifulSoup
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
@@ -34,14 +35,13 @@ class FirstWindow(QWidget, Ui_Form):
         self.btn_forecast.clicked.connect(self.forecast)
         self.currency_combobox.addItems(rate)
         self.currency_combobox.currentIndexChanged.connect(self.balance)
-        self.buttons_edit = QButtonGroup()
-        self.buttons_delete = QButtonGroup()
         self.btn_new.setIcon(QIcon('add.png'))
+        self.btn_forecast.setIcon(QIcon('forecast.png'))
 
         self.select_data()
         self.currency()
         self.balance()
-        self.setFixedSize(600, 645)
+        self.setFixedSize(630, 650)
 
     def add_new(self):
         self.add_form = AddWindow()
@@ -50,9 +50,13 @@ class FirstWindow(QWidget, Ui_Form):
 
     def delete(self):
         name = self.tableWidget.item(buttons_del.index(self.sender().objectName()), 0).text()
-        self.delete_form = DeleteWindow(name)
-        self.delete_form.show()
-        self.delete_form.updateSignal.connect(self.update)
+        valid = QMessageBox.question(self, 'Удалить',
+                                     f'Действительно удалить элемент "{name}"? Отменить это действие будет невозможно.',
+                                     QMessageBox.Ok | QMessageBox.Cancel)
+        if valid == QMessageBox.Yes:
+            self.cur.execute("DELETE FROM stock WHERE title = ?", (name,))
+            self.con.commit()
+            self.update()
 
     def edit(self):
         name = self.tableWidget.item(buttons_edit.index(self.sender().objectName()), 0).text()
@@ -76,21 +80,20 @@ class FirstWindow(QWidget, Ui_Form):
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(int(row[1])) + ' ' + signs[row[3] - 1]))
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(int(row[2])) + '%'))
             self.tableWidget.setCellWidget(i, 3,
-                                           QPushButton(text='Изменить', objectName=f'btn_tabl_{i}', clicked=self.edit))
+                                           QPushButton(objectName=f'btn_tabl_{i}', clicked=self.edit))
             self.tableWidget.setCellWidget(i, 4,
-                                           QPushButton(text='Удалить', objectName=f'btn_tabl_{i}', clicked=self.delete))
+                                           QPushButton(objectName=f'btn_tabl_{i}', clicked=self.delete))
 
             self.tableWidget.cellWidget(i, 3).setIcon(QIcon('edit.png'))
             self.tableWidget.cellWidget(i, 4).setIcon(QIcon('delete.png'))
-
-            self.buttons_edit.addButton(self.tableWidget.cellWidget(i, 3), id=i)
-            self.buttons_delete.addButton(self.tableWidget.cellWidget(i, 4), id=i)
 
             buttons_edit.append(self.tableWidget.cellWidget(i, 3).objectName())
             buttons_del.append(self.tableWidget.cellWidget(i, 4).objectName())
 
         self.tableWidget.setHorizontalHeaderLabels(['Название', 'Стоимость', 'Доходность', '', ''])
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.tableWidget.resizeColumnToContents(3)
+        self.tableWidget.resizeColumnToContents(4)
 
     def balance(self):
         q = 'SELECT cost FROM stock WHERE currency = (SELECT id FROM currencies WHERE sign = ?)'
@@ -141,8 +144,16 @@ class AddWindow(QWidget, Ui_Form_Add):
         self.setupUi(self)
         self.con = sqlite3.connect('stocks.db')
         self.cur = self.con.cursor()
-        self.comboBox.addItems(['RUB', 'USD', 'EUR'])
+        self.comboBox.addItems(['---', 'RUB', 'USD', 'EUR'])
         self.pushButton.clicked.connect(self.add_new)
+
+        self.name.textChanged.connect(self.change)
+        self.cost.textChanged.connect(self.change)
+        self.percent.textChanged.connect(self.change)
+        self.comboBox.currentTextChanged.connect(self.change)
+        self.btn = False
+
+        self.setFixedSize(560, 144)
 
     def add_new(self):
         name = self.name.text()
@@ -151,7 +162,7 @@ class AddWindow(QWidget, Ui_Form_Add):
 
         try:
             if self.name.text().isdigit():
-                assert ValueError
+                raise TitleError
             float(cost)
             float(perc)
             currency = self.cur.execute('SELECT id FROM currencies WHERE sign = ?',
@@ -166,34 +177,28 @@ class AddWindow(QWidget, Ui_Form_Add):
             self.percent.clear()
 
             self.close()
+        except TitleError:
+            self.label.setText('Ошибка. Название должно включать в себя буквы.')
         except ValueError:
-            self.label.setText('Ошибка. Введены неверные значения.')
+            self.label.setText('Ошибка. Стоимость и доходность должны быть числами.')
         except sqlite3.IntegrityError:
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
 
+    def change(self):
+        if self.name.text() and self.cost.text() and self.percent.text() and self.comboBox.currentIndex() > 0:
+            self.pushButton.setEnabled(True)
+            self.btn = True
+        else:
+            self.pushButton.setDisabled(True)
+            self.btn = False
 
-class DeleteWindow(QDialog):
-    updateSignal = pyqtSignal()
-
-    def __init__(self, name):
-        super().__init__()
-
-        self.con = sqlite3.connect('stocks.db')
-        self.cur = self.con.cursor()
-        self.name = name
-        self.delete()
-
-    def delete(self):
-        valid = QMessageBox.question(
-            self,
-            f'Действительно удалить элемент "{self.name}"?',
-            ' Отменить это действие будет невозможно.',
-            QMessageBox.Yes, QMessageBox.No)
-        if valid == QMessageBox.Yes:
-            self.cur.execute("DELETE FROM stock WHERE title = ?", (self.name,))
-            self.con.commit()
-        self.updateSignal.emit()
-        self.close()
+    def keyPressEvent(self, event):
+        if self.btn:
+            if event.key() == Qt.Key_Enter:
+                self.add_new()
+            elif event.key() == Qt.Key_Escape:
+                self.close()
+        event.accept()
 
 
 class EditWindow(QWidget, Ui_Form_Add):
@@ -207,6 +212,13 @@ class EditWindow(QWidget, Ui_Form_Add):
         self.comboBox.addItems(['RUB', 'USD', 'EUR'])
         self.num = num
         self.pushButton.clicked.connect(self.edit)
+        self.name.textChanged.connect(self.change)
+        self.cost.textChanged.connect(self.change)
+        self.percent.textChanged.connect(self.change)
+        self.comboBox.currentTextChanged.connect(self.change)
+        self.btn = False
+
+        self.setFixedSize(560, 144)
 
         title = 'SELECT title FROM stock WHERE id = ?'
         cost = 'SELECT cost FROM stock WHERE id = ?'
@@ -218,6 +230,7 @@ class EditWindow(QWidget, Ui_Form_Add):
         q = 'SELECT currency FROM stock WHERE id = ?'
         self.comboBox.setCurrentIndex(int(self.cur.execute(q, (num,)).fetchone()[0]) - 1)
 
+
     def edit(self):
         name = self.name.text()
         cost = self.cost.text()
@@ -227,7 +240,7 @@ class EditWindow(QWidget, Ui_Form_Add):
             float(cost)
             float(perc)
             if self.name.text().isdigit():
-                assert ValueError
+                raise TitleError
             currency = self.cur.execute('SELECT id FROM currencies WHERE sign = ?',
                                         (self.comboBox.currentText(),)).fetchone()[0]
             que = 'UPDATE stock SET title = ?, cost = ?, percent = ?, currency = ? WHERE id = ?'
@@ -240,10 +253,28 @@ class EditWindow(QWidget, Ui_Form_Add):
             self.percent.clear()
 
             self.close()
+        except TitleError:
+            self.label.setText('Ошибка. Название должно включать в себя буквы.')
         except ValueError:
             self.label.setText('Ошибка. Введены неверные значения.')
         except sqlite3.IntegrityError:
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
+
+    def change(self):
+        if self.name.text() and self.cost.text() and self.percent.text():
+            self.pushButton.setEnabled(True)
+            self.btn = True
+        else:
+            self.pushButton.setDisabled(True)
+            self.btn = False
+
+    def keyPressEvent(self, event):
+        if self.btn:
+            if event.key() == Qt.Key_Enter:
+                self.edit()
+            elif event.key() == Qt.Key_Escape:
+                self.close()
+        event.accept()
 
 
 class ForecastWindow(QWidget, Ui_Form_Forecast):
@@ -261,6 +292,7 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
         self.allcosts = []
         self.update()
         self.costs()
+        self.setFixedSize(500, 600)
 
     def table(self):  # заполнение таблицы
         res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM stock").fetchall()
@@ -291,7 +323,9 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
             print(usd0)
             balance = sum(rubs) + sum(usds) * usd0 + sum(eurs) * eur0
             print(balance)
-        except AttributeError:
+        except UnboundLocalError:
+            pass
+        except Exception:
             pass
 
         if self.currency_combobox.currentIndex() == 0:
@@ -309,7 +343,11 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
 
     def costs(self):  # список начальных стоимостей
         for i in range(self.tableWidget.rowCount()):
-            self.allcosts.append(float(self.tableWidget.item(i, 1).text()[:-2]))
+            price = float(self.tableWidget.item(i, 1).text()[:-2])
+            if price % 1 == 0:
+                self.allcosts.append(int(price))
+            else:
+                self.allcosts.append(price)
 
     def change(self, value):
         for i in range(self.tableWidget.rowCount()):
@@ -318,7 +356,8 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
                 cost = self.allcosts[i]
                 perc = float(self.tableWidget.item(i, 2).text()[:-1])
                 res = round((cost + (cost * (perc / 100) / 12 * value)), 2)
-                self.tableWidget.setItem(i, 1, QTableWidgetItem(str(res) + ' ' + sign))
+                resint = int(res) if res % 1 == 0 else res
+                self.tableWidget.setItem(i, 1, QTableWidgetItem(str(resint) + ' ' + sign))
             else:
                 self.tableWidget.setItem(i, 1, QTableWidgetItem(str(self.allcosts[i]) + ' ' + sign))
 
@@ -357,6 +396,10 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
     def update(self):
         self.table()
         self.balance()
+
+
+class TitleError(Exception):
+    pass
 
 
 def except_hook(cls, exception, traceback):
