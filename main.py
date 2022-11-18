@@ -1,16 +1,23 @@
 import sys
 import sqlite3
 import requests
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon
 from PyQt5.Qt import Qt
 from bs4 import BeautifulSoup
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QMessageBox, QButtonGroup, QPushButton
+from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QMessageBox, QPushButton
+from PyQt5.QtWinExtras import QtWin
 
 from wind import Ui_Form
 from add_new import Ui_Form_Add
 from forecast import Ui_Form_Forecast
+from styles import style_continue
+from styles import style
+
+myappid = 'mycompany.myproduct.subproduct.version'
+QtWin.setCurrentProcessExplicitAppUserModelID(myappid)
+
 
 signs = '₽$€'
 rate = ('в рублях', 'в долларах', 'в евро')
@@ -41,7 +48,9 @@ class FirstWindow(QWidget, Ui_Form):
         self.select_data()
         self.currency()
         self.balance()
-        self.setFixedSize(630, 650)
+        self.setFixedSize(625, 650)
+
+        self.setStyleSheet(style)
 
     def add_new(self):
         self.add_form = AddWindow()
@@ -145,7 +154,7 @@ class AddWindow(QWidget, Ui_Form_Add):
         self.con = sqlite3.connect('stocks.db')
         self.cur = self.con.cursor()
         self.comboBox.addItems(['---', 'RUB', 'USD', 'EUR'])
-        self.pushButton.clicked.connect(self.add_new)
+        self.btn_continue.clicked.connect(self.add_new)
 
         self.name.textChanged.connect(self.change)
         self.cost.textChanged.connect(self.change)
@@ -153,7 +162,9 @@ class AddWindow(QWidget, Ui_Form_Add):
         self.comboBox.currentTextChanged.connect(self.change)
         self.btn = False
 
-        self.setFixedSize(560, 144)
+        self.setFixedSize(600, 155)
+
+        self.setStyleSheet(style_continue)
 
     def add_new(self):
         name = self.name.text()
@@ -186,11 +197,13 @@ class AddWindow(QWidget, Ui_Form_Add):
 
     def change(self):
         if self.name.text() and self.cost.text() and self.percent.text() and self.comboBox.currentIndex() > 0:
-            self.pushButton.setEnabled(True)
+            self.btn_continue.setEnabled(True)
             self.btn = True
+            self.setStyleSheet(style)
         else:
-            self.pushButton.setDisabled(True)
+            self.btn_continue.setDisabled(True)
             self.btn = False
+            self.setStyleSheet(style_continue)
 
     def keyPressEvent(self, event):
         if self.btn:
@@ -211,7 +224,7 @@ class EditWindow(QWidget, Ui_Form_Add):
         self.cur = self.con.cursor()
         self.comboBox.addItems(['RUB', 'USD', 'EUR'])
         self.num = num
-        self.pushButton.clicked.connect(self.edit)
+        self.btn_continue.clicked.connect(self.edit)
         self.name.textChanged.connect(self.change)
         self.cost.textChanged.connect(self.change)
         self.percent.textChanged.connect(self.change)
@@ -230,6 +243,7 @@ class EditWindow(QWidget, Ui_Form_Add):
         q = 'SELECT currency FROM stock WHERE id = ?'
         self.comboBox.setCurrentIndex(int(self.cur.execute(q, (num,)).fetchone()[0]) - 1)
 
+        self.setStyleSheet(style_continue)
 
     def edit(self):
         name = self.name.text()
@@ -262,11 +276,13 @@ class EditWindow(QWidget, Ui_Form_Add):
 
     def change(self):
         if self.name.text() and self.cost.text() and self.percent.text():
-            self.pushButton.setEnabled(True)
+            self.btn_continue.setEnabled(True)
             self.btn = True
+            self.setStyleSheet(style)
         else:
-            self.pushButton.setDisabled(True)
+            self.btn_continue.setDisabled(True)
             self.btn = False
+            self.setStyleSheet(style_continue)
 
     def keyPressEvent(self, event):
         if self.btn:
@@ -292,7 +308,10 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):
         self.allcosts = []
         self.update()
         self.costs()
+
         self.setFixedSize(500, 600)
+
+        self.setStyleSheet(style)
 
     def table(self):  # заполнение таблицы
         res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM stock").fetchall()
@@ -409,6 +428,8 @@ def except_hook(cls, exception, traceback):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = FirstWindow()
+    app.setWindowIcon(QIcon('logo.jpg'))
+    ex.setStyleSheet('background: #696969; text: white')
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())

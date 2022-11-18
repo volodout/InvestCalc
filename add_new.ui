@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>593</width>
-    <height>144</height>
+    <height>155</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,6 +33,12 @@
        </item>
        <item>
         <widget class="QLineEdit" name="name">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
@@ -60,6 +66,12 @@
        </item>
        <item>
         <widget class="QLineEdit" name="cost">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
@@ -114,6 +126,12 @@
        </item>
        <item>
         <widget class="QLineEdit" name="percent">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>30</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
@@ -140,9 +158,15 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="btn_continue">
      <property name="enabled">
       <bool>false</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>40</height>
+      </size>
      </property>
      <property name="font">
       <font>

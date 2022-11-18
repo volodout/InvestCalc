@@ -45,6 +45,12 @@
            </item>
            <item>
             <widget class="QComboBox" name="currency_combobox">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="font">
               <font>
                <family>Bahnschrift SemiBold</family>
@@ -199,7 +205,7 @@
              <property name="minimumSize">
               <size>
                <width>200</width>
-               <height>40</height>
+               <height>45</height>
               </size>
              </property>
              <property name="maximumSize">
@@ -246,10 +252,16 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QPushButton" name="btn_new">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>45</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <family>Bahnschrift SemiBold</family>
-           <pointsize>14</pointsize>
+           <pointsize>12</pointsize>
           </font>
          </property>
          <property name="text">
