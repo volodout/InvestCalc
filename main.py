@@ -1,9 +1,9 @@
 import sys
 import sqlite3
 import requests
+from bs4 import BeautifulSoup
 from PyQt5.QtGui import QIcon
 from PyQt5.Qt import Qt
-from bs4 import BeautifulSoup
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QApplication, QTableWidgetItem, QMessageBox, QPushButton
@@ -13,7 +13,8 @@ from wind import Ui_Form
 from add_edit import Ui_Form_AddEdit
 from forecast import Ui_Form_Forecast
 from styles import style_continue
-from styles import style
+from styles import style_dark
+from styles import style_light
 
 myappid = 'mycompany.myproduct.subproduct.version'
 QtWin.setCurrentProcessExplicitAppUserModelID(myappid)
@@ -27,29 +28,46 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 buttons_edit = []
 buttons_del = []
 usd0, eur0 = 0., 0.  # значения валют
+theme = style_dark
 
 
 class FirstWindow(QWidget, Ui_Form):  # главное окно
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        global usd0, eur0
+        global usd0, eur0, theme
         self.con = sqlite3.connect('stocks.db')
         self.cur = self.con.cursor()
+        self.them = theme
 
         self.btn_new.clicked.connect(self.add_new)
         self.btn_forecast.clicked.connect(self.forecast)
         self.currency_combobox.addItems(rate)
         self.currency_combobox.currentIndexChanged.connect(self.balance)
+        self.btn_theme.clicked.connect(self.theme_change)
         self.btn_new.setIcon(QIcon('add.png'))
         self.btn_forecast.setIcon(QIcon('forecast.png'))
+        self.btn_theme.setIcon(QIcon('moon.webp'))
 
         self.select_data()
         self.currency()
         self.balance()
         self.setFixedSize(610, 650)
 
-        self.setStyleSheet(style)
+        self.setStyleSheet(theme)
+
+    def theme_change(self):
+        global theme
+        if theme == style_dark:
+            theme = 'Fusion'
+            theme = style_light
+            self.btn_theme.setIcon(QIcon('sun.png'))
+            print('light')
+        else:
+            theme = style_dark
+            self.btn_theme.setIcon(QIcon('moon.webp'))
+            print('dark')
+        self.setStyleSheet(theme)
 
     def add_new(self):
         self.add_form = AddWindow()
@@ -168,7 +186,8 @@ class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления да
 
         self.setFixedSize(600, 155)
 
-        self.setStyleSheet(style_continue)
+        self.setStyleSheet(theme)
+        self.btn_continue.setStyleSheet(style_continue)
 
     def add_new(self):
         name = self.name.text()
@@ -203,11 +222,11 @@ class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления да
         if self.name.text() and self.cost.text() and self.percent.text() and self.comboBox.currentIndex() > 0:
             self.btn_continue.setEnabled(True)
             self.btn = True
-            self.setStyleSheet(style)
+            self.btn_continue.setStyleSheet(theme)
         else:
             self.btn_continue.setDisabled(True)
             self.btn = False
-            self.setStyleSheet(style_continue)
+            self.btn_continue.setStyleSheet(style_continue)
 
     def keyPressEvent(self, event):  # обработка клавиатуры
         if self.btn:
@@ -226,6 +245,7 @@ class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения да�
         self.setupUi(self)
         self.con = sqlite3.connect('stocks.db')
         self.cur = self.con.cursor()
+        self.setWindowTitle('Изменить')
         self.comboBox.addItems(['RUB', 'USD', 'EUR'])
         self.num = num
         self.btn_continue.clicked.connect(self.edit)
@@ -248,7 +268,7 @@ class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения да�
         self.comboBox.setCurrentIndex(int(self.cur.execute(q, (num,)).fetchone()[0]) - 1)
         self.change()
 
-        self.setStyleSheet(style)
+        self.setStyleSheet(theme)
 
     def edit(self):
         name = self.name.text()
@@ -280,15 +300,14 @@ class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения да�
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
 
     def change(self):  # изменение кнопки
-        self.setStyleSheet(style)
-        if self.name.text() and self.cost.text() and self.percent.text():
+        if self.name.text() and self.cost.text() and self.percent.text() and self.comboBox.currentIndex() > 0:
             self.btn_continue.setEnabled(True)
             self.btn = True
-            self.setStyleSheet(style)
+            self.btn_continue.setStyleSheet(theme)
         else:
-            self.btn_continue.setEnabled(False)
+            self.btn_continue.setDisabled(True)
             self.btn = False
-            self.setStyleSheet(style_continue)
+            self.btn_continue.setStyleSheet(style_continue)
 
     def keyPressEvent(self, event):  # обработка клавиатуры
         if self.btn:
@@ -317,7 +336,7 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):  # окно прогнозов
 
         self.setFixedSize(500, 600)
 
-        self.setStyleSheet(style)
+        self.setStyleSheet(theme)
 
     def table(self):  # заполнение таблицы
         res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM stock").fetchall()

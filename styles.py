@@ -1,10 +1,7 @@
-style = '''
+style_dark = '''
 QWidget{
     background: #323232;
     color: #fff
-}
-QTableWidget{
-    border: #fff 2px
 }
 QPushButton{
     background: #ffc800;
@@ -54,6 +51,22 @@ QHeaderView::section{
 QWidget:item:selected{
     background-color: darkgrey;
 }
+'''
+
+style_light = '''
+QPushButton{
+    background: #ffc800;
+    border-radius: 5px;
+    color: #000
+}
+QPushButton#btn_new, QPushButton#btn_forecast{
+    border-radius: 20px;
+    color: #000
+}
+QPushButton:hover{
+    background: #fff700;
+}
+
 '''
 
 style_continue = '''
