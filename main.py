@@ -2,7 +2,7 @@ import sys
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
 from PyQt5.Qt import Qt
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import pyqtSignal
@@ -12,6 +12,7 @@ from PyQt5.QtWinExtras import QtWin
 from wind import Ui_Form
 from add_edit import Ui_Form_AddEdit
 from forecast import Ui_Form_Forecast
+from statistic import Ui_Stat
 from styles import style_continue
 from styles import style_dark
 from styles import style_light
@@ -27,7 +28,8 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
                          ' Chrome/104.0.5112.124 Safari/537.36'}
 buttons_edit = []
 buttons_del = []
-usd0, eur0 = 0., 0.  # значения валют
+usd0, eur0 = 0., 0.  # значения курса валют
+balances = 0
 theme = style_dark
 
 
@@ -35,24 +37,26 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        global usd0, eur0, theme
-        self.con = sqlite3.connect('stocks.db')
+        global usd0, eur0, balances, theme
+        self.con = sqlite3.connect('assets.db')
         self.cur = self.con.cursor()
         self.them = theme
 
         self.btn_new.clicked.connect(self.add_new)
         self.btn_forecast.clicked.connect(self.forecast)
+        self.btn_statistic.clicked.connect(self.statistic)
         self.currency_combobox.addItems(rate)
         self.currency_combobox.currentIndexChanged.connect(self.balance)
         self.btn_theme.clicked.connect(self.theme_change)
-        self.btn_new.setIcon(QIcon('add.png'))
-        self.btn_forecast.setIcon(QIcon('forecast.png'))
-        self.btn_theme.setIcon(QIcon('moon.webp'))
+        self.btn_new.setIcon(QIcon('pictures/icons/add.png'))
+        self.btn_forecast.setIcon(QIcon('pictures/icons/forecast.png'))
+        self.btn_theme.setIcon(QIcon('pictures/icons/sun.png'))
+        self.btn_statistic.setIcon((QIcon('pictures/icons/info.png')))
 
         self.select_data()
         self.currency()
         self.balance()
-        self.setFixedSize(610, 650)
+        self.setFixedSize(666, 650)
 
         self.setStyleSheet(theme)
 
@@ -61,11 +65,11 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
         if theme == style_dark:
             theme = 'Fusion'
             theme = style_light
-            self.btn_theme.setIcon(QIcon('sun.png'))
+            self.btn_theme.setIcon(QIcon('pictures/icons/moon.webp'))
             print('light')
         else:
             theme = style_dark
-            self.btn_theme.setIcon(QIcon('moon.webp'))
+            self.btn_theme.setIcon(QIcon('pictures/icons/sun.png'))
             print('dark')
         self.setStyleSheet(theme)
 
@@ -81,13 +85,13 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
                                      QMessageBox.Ok | QMessageBox.Cancel)
 
         if valid == QMessageBox.Ok:
-            self.cur.execute("DELETE FROM stock WHERE title = ?", (name,))
+            self.cur.execute("DELETE FROM asset WHERE title = ?", (name,))
             self.con.commit()
             self.update()
 
     def edit(self):
         name = self.tableWidget.item(buttons_edit.index(self.sender().objectName()), 0).text()
-        query = 'SELECT id FROM stock WHERE title = ?'
+        query = 'SELECT id FROM asset WHERE title = ?'
         num = self.cur.execute(query, (name,)).fetchone()[0]
         self.edit_form = EditWindow(num)
         self.edit_form.show()
@@ -97,9 +101,14 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
         self.forecast_form = ForecastWindow()
         self.forecast_form.show()
 
+    def statistic(self):
+        self.statistic_form = StatisticWindow()
+        self.statistic_form.show()
+
     def select_data(self):  # заполнение таблицы данными
-        res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM stock").fetchall()
-        self.tableWidget.setColumnCount(5)
+        res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM asset").fetchall()
+        kinds = [' Акция ', ' Вклад ']
+        self.tableWidget.setColumnCount(6)
         self.tableWidget.setRowCount(len(res))
 
         for i, row in enumerate(res):
@@ -108,24 +117,30 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
             self.tableWidget.setItem(i, 1, QTableWidgetItem(str(rowint) + ' ' + signs[row[3] - 1]))
             rowint = int(row[2]) if float(row[2]) % 1 == 0 else float(row[2])
             self.tableWidget.setItem(i, 2, QTableWidgetItem(str(rowint) + '%'))
-            self.tableWidget.setCellWidget(i, 3,
-                                           QPushButton(objectName=f'btn_tabl_{i}', clicked=self.edit))
+            q = self.cur.execute(f'SELECT kind FROM asset WHERE title = "{row[0]}"').fetchone()[0]
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(str(kinds[q - 1])))
             self.tableWidget.setCellWidget(i, 4,
+                                           QPushButton(objectName=f'btn_tabl_{i}', clicked=self.edit))
+            self.tableWidget.setCellWidget(i, 5,
                                            QPushButton(objectName=f'btn_tabl_{i}', clicked=self.delete))
 
-            self.tableWidget.cellWidget(i, 3).setIcon(QIcon('edit.png'))
-            self.tableWidget.cellWidget(i, 4).setIcon(QIcon('delete.png'))
+            self.tableWidget.cellWidget(i, 4).setIcon(QIcon('pictures/icons/edit.png'))
+            self.tableWidget.cellWidget(i, 5).setIcon(QIcon('pictures/icons/delete.png'))
 
-            buttons_edit.append(self.tableWidget.cellWidget(i, 3).objectName())
-            buttons_del.append(self.tableWidget.cellWidget(i, 4).objectName())
+            buttons_edit.append(self.tableWidget.cellWidget(i, 4).objectName())
+            buttons_del.append(self.tableWidget.cellWidget(i, 5).objectName())
 
-        self.tableWidget.setHorizontalHeaderLabels(['Название', 'Стоимость', 'Доходность', '', ''])
+        self.tableWidget.setHorizontalHeaderLabels(['Название', 'Стоимость', 'Доходность', 'Тип', '', ''])
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tableWidget.resizeColumnToContents(3)
         self.tableWidget.resizeColumnToContents(4)
+        self.tableWidget.resizeColumnToContents(5)
+        self.tableWidget.horizontalHeader().setFont(QFont('Bahnschrift SemiBold', 15))
+        self.setStyleSheet(theme)
 
     def balance(self):  # итоговый баланс
-        q = 'SELECT cost FROM stock WHERE currency = (SELECT id FROM currencies WHERE sign = ?)'
+        global balances
+        q = 'SELECT cost FROM asset WHERE currency = (SELECT id FROM currencies WHERE sign = ?)'
 
         rub = sum([elem[0] for elem in self.cur.execute(q, ('RUB',)).fetchall()])
         usd = sum([elem[0] for elem in self.cur.execute(q, ('USD',)).fetchall()])
@@ -137,6 +152,7 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
             value = round(float(balance), 2)
             value1 = int(value) if value % 1 == 0 else value
             self.label_2.setText(str(value1) + ' ₽')
+            balances = value1
         elif self.currency_combobox.currentIndex() == 1:
             value = round(balance / float(self.usd_course.text()[:-1]), 2)
             value1 = int(value) if value % 1 == 0 else value
@@ -165,6 +181,7 @@ class FirstWindow(QWidget, Ui_Form):  # главное окно
         buttons_del.clear()
         self.select_data()
         self.balance()
+        self.setStyleSheet(theme)
 
 
 class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления данных
@@ -173,18 +190,20 @@ class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления да
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.con = sqlite3.connect('stocks.db')
+        self.con = sqlite3.connect('assets.db')
         self.cur = self.con.cursor()
         self.comboBox.addItems(['---', 'RUB', 'USD', 'EUR'])
+        self.comboBox_type.addItems(['---', 'Акция', 'Облигация/вклад'])
         self.btn_continue.clicked.connect(self.add_new)
 
         self.name.textChanged.connect(self.change)
         self.cost.textChanged.connect(self.change)
         self.percent.textChanged.connect(self.change)
         self.comboBox.currentTextChanged.connect(self.change)
+        self.comboBox_type.currentTextChanged.connect(self.change)
         self.btn = False
 
-        self.setFixedSize(600, 155)
+        self.setFixedSize(700, 155)
 
         self.setStyleSheet(theme)
         self.btn_continue.setStyleSheet(style_continue)
@@ -201,8 +220,10 @@ class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления да
             float(perc)
             currency = self.cur.execute('SELECT id FROM currencies WHERE sign = ?',
                                         (self.comboBox.currentText(),)).fetchone()[0]
-            que = 'INSERT INTO stock(title,cost,percent,currency) VALUES(?,?,?,?)'
-            self.con.cursor().execute(que, (name, cost, perc, currency))
+            type_asset = self.cur.execute('SELECT id FROM types WHERE type = ?',
+                                          (self.comboBox_type.currentText(),)).fetchone()[0]
+            que = 'INSERT INTO asset(title,cost,percent,currency, kind) VALUES(?,?,?,?,?)'
+            self.con.cursor().execute(que, (name, cost, perc, currency, type_asset))
             self.con.commit()
             self.updateSignal.emit()
 
@@ -219,10 +240,15 @@ class AddWindow(QWidget, Ui_Form_AddEdit):  # окно добавления да
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
 
     def change(self):  # изменение кнопки
-        if self.name.text() and self.cost.text() and self.percent.text() and self.comboBox.currentIndex() > 0:
-            self.btn_continue.setEnabled(True)
-            self.btn = True
-            self.btn_continue.setStyleSheet(theme)
+        if self.name.text() and self.cost.text() and self.percent.text():
+            if self.comboBox.currentIndex() > 0 and self.comboBox_type.currentIndex() > 0:
+                self.btn_continue.setEnabled(True)
+                self.btn = True
+                self.btn_continue.setStyleSheet(theme)
+            else:
+                self.btn_continue.setDisabled(True)
+                self.btn = False
+                self.btn_continue.setStyleSheet(style_continue)
         else:
             self.btn_continue.setDisabled(True)
             self.btn = False
@@ -243,10 +269,13 @@ class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения да�
     def __init__(self, num):
         super().__init__()
         self.setupUi(self)
-        self.con = sqlite3.connect('stocks.db')
+        self.con = sqlite3.connect('assets.db')
         self.cur = self.con.cursor()
         self.setWindowTitle('Изменить')
+
         self.comboBox.addItems(['RUB', 'USD', 'EUR'])
+        self.comboBox_type.addItems(['Акция', 'Облигация/вклад'])
+
         self.num = num
         self.btn_continue.clicked.connect(self.edit)
         self.name.textChanged.connect(self.change)
@@ -255,17 +284,18 @@ class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения да�
         self.comboBox.currentTextChanged.connect(self.change)
         self.btn = False
 
-        self.setFixedSize(560, 144)
+        self.setFixedSize(700, 155)
 
-        title = 'SELECT title FROM stock WHERE id = ?'
-        cost = 'SELECT cost FROM stock WHERE id = ?'
-        percent = 'SELECT percent FROM stock WHERE id = ?'
-
+        title = 'SELECT title FROM asset WHERE id = ?'
+        cost = 'SELECT cost FROM asset WHERE id = ?'
+        percent = 'SELECT percent FROM asset WHERE id = ?'
+        curr = 'SELECT currency FROM asset WHERE id = ?'
+        type_asset = 'SELECT kind FROM asset WHERE id = ?'
         self.name.setText(self.cur.execute(title, (num,)).fetchone()[0])
         self.cost.setText(str(self.cur.execute(cost, (num,)).fetchone()[0]))
         self.percent.setText(str(self.cur.execute(percent, (num,)).fetchone()[0]))
-        q = 'SELECT currency FROM stock WHERE id = ?'
-        self.comboBox.setCurrentIndex(int(self.cur.execute(q, (num,)).fetchone()[0]) - 1)
+        self.comboBox.setCurrentIndex(int(self.cur.execute(curr, (num,)).fetchone()[0]) - 1)
+        self.comboBox_type.setCurrentIndex(int(self.cur.execute(type_asset, (num,)).fetchone()[0]) - 1)
         self.change()
 
         self.setStyleSheet(theme)
@@ -282,8 +312,10 @@ class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения да�
                 raise TitleError
             currency = self.cur.execute('SELECT id FROM currencies WHERE sign = ?',
                                         (self.comboBox.currentText(),)).fetchone()[0]
-            que = 'UPDATE stock SET title = ?, cost = ?, percent = ?, currency = ? WHERE id = ?'
-            self.con.cursor().execute(que, (name, cost, perc, currency, self.num))
+            type_asset = self.cur.execute('SELECT id FROM types WHERE type = ?',
+                                          (self.comboBox_type.currentText(),)).fetchone()[0]
+            que = 'UPDATE asset SET title = ?, cost = ?, percent = ?, currency = ?, kind = ? WHERE id = ?'
+            self.con.cursor().execute(que, (name, cost, perc, currency, type_asset, self.num))
             self.con.commit()
             self.updateSignal.emit()
 
@@ -300,7 +332,7 @@ class EditWindow(QWidget, Ui_Form_AddEdit):  # окно изменения да�
             self.label.setText('Ошибка. Актив с таким названием уже существует.')
 
     def change(self):  # изменение кнопки
-        if self.name.text() and self.cost.text() and self.percent.text() and self.comboBox.currentIndex() > 0:
+        if self.name.text() and self.cost.text() and self.percent.text():
             self.btn_continue.setEnabled(True)
             self.btn = True
             self.btn_continue.setStyleSheet(theme)
@@ -322,7 +354,7 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):  # окно прогнозов
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.con = sqlite3.connect('stocks.db')
+        self.con = sqlite3.connect('assets.db')
         self.cur = self.con.cursor()
 
         self.horizontalSlider.valueChanged.connect(self.time)
@@ -339,7 +371,7 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):  # окно прогнозов
         self.setStyleSheet(theme)
 
     def table(self):  # заполнение таблицы
-        res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM stock").fetchall()
+        res = self.con.cursor().execute("SELECT title, cost, percent, currency FROM asset").fetchall()
         self.tableWidget.setColumnCount(3)
         self.tableWidget.setRowCount(len(res))
 
@@ -354,7 +386,7 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):  # окно прогнозов
     def balance(self):  # баланс
         balance = 0.
         try:
-            res = self.cur.execute('SELECT * FROM stock').fetchall()
+            res = self.cur.execute('SELECT * FROM asset').fetchall()
             rubs, usds, eurs = [], [], []
 
             for i in range(len(res)):
@@ -439,6 +471,39 @@ class ForecastWindow(QWidget, Ui_Form_Forecast):  # окно прогнозов
     def update(self):
         self.table()
         self.balance()
+
+
+class StatisticWindow(QWidget, Ui_Stat):  # окно статистики
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.con = sqlite3.connect('assets.db')
+        self.cur = self.con.cursor()
+        self.setStyleSheet(theme)
+
+        res = [i[0] for i in self.cur.execute('SELECT kind FROM asset').fetchall()]
+        if res.count(1) / len(res) > 0.6:
+            self.level.setText('РИСКОВАННЫЙ')
+            self.level.setStyleSheet('color:red')
+        elif res.count(1) / len(res) < 0.4:
+            self.level.setText('КОНСЕРВАТИВНЫЙ')
+            self.level.setStyleSheet('color:#ffc800')
+
+        else:
+            self.level.setText('УМЕРЕННЫЙ')
+            self.level.setStyleSheet('color:lime')
+
+        self.stocks.setText(f'{round(res.count(1) / len(res) * 100, 2)}%  ({res.count(1)}/{len(res)})')
+        self.bonds.setText(f'{round(res.count(2) / len(res) * 100, 2)}%  ({res.count(2)}/{len(res)})')
+
+        rubs = sum(i[0] for i in self.cur.execute('SELECT cost FROM asset WHERE currency = 1').fetchall())
+        usds = sum(i[0] for i in self.cur.execute('SELECT cost FROM asset WHERE currency = 2').fetchall())
+        eurs = sum(i[0] for i in self.cur.execute('SELECT cost FROM asset WHERE currency = 3').fetchall())
+        self.rub.setText(f'{round(rubs / balances * 100, 2)}%  ({rubs}₽)')
+        self.usd.setText(f'{round(usds * usd0 / balances * 100, 2)}%  ({usds}$)')
+        self.eur.setText(f'{round(eurs * eur0 / balances * 100, 2)}%  ({eurs}€)')
+
+        self.setFixedSize(450, 340)
 
 
 class TitleError(Exception):

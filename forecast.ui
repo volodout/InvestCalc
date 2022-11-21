@@ -145,7 +145,7 @@
       <bool>true</bool>
      </attribute>
      <attribute name="horizontalHeaderDefaultSectionSize">
-      <number>135</number>
+      <number>145</number>
      </attribute>
     </widget>
    </item>
