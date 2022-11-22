@@ -517,7 +517,7 @@ def except_hook(cls, exception, traceback):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = FirstWindow()
-    app.setWindowIcon(QIcon('icon.jpg'))
+    app.setWindowIcon(QIcon('pictures/icons/icon.jpg'))
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())
